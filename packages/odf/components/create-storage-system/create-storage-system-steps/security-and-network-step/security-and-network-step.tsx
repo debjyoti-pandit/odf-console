@@ -6,6 +6,7 @@ import { Form } from '@patternfly/react-core';
 import { FEATURES } from '../../../../features';
 import { NetworkType, NADSelectorType } from '../../../../types';
 import { WizardDispatch, WizardState } from '../../reducer';
+import { ConnectionDetails } from '../connection-details-step';
 import { NetworkFormGroup } from './configure';
 import { Encryption } from './encryption';
 
@@ -13,6 +14,7 @@ export const SecurityAndNetwork: React.FC<SecurityAndNetworkProps> = ({
   state,
   dispatch,
   infraType,
+  isExternal,
 }) => {
   const isMultusSupported = useFlag(FEATURES.OCS_MULTUS);
 
@@ -22,7 +24,7 @@ export const SecurityAndNetwork: React.FC<SecurityAndNetworkProps> = ({
     publicNetwork,
     encryption,
     kms,
-  } = state;
+  } = state.securityAndNetwork;
 
   const setNetworkType = (networkType: NetworkType) => {
     dispatch({
@@ -51,8 +53,9 @@ export const SecurityAndNetwork: React.FC<SecurityAndNetworkProps> = ({
         kms={kms}
         dispatch={dispatch}
         infraType={infraType}
+        isExternal={isExternal}
       />
-      {isMultusSupported && (
+      {!isExternal && isMultusSupported && (
         <NetworkFormGroup
           networkType={nwType}
           setNetworkType={setNetworkType}
@@ -61,12 +64,20 @@ export const SecurityAndNetwork: React.FC<SecurityAndNetworkProps> = ({
           clusterNetwork={clusterNetwork}
         />
       )}
+      {isExternal && (
+        <ConnectionDetails
+          state={state.connectionDetails}
+          dispatch={dispatch}
+          externalStorage={state.backingStorage.externalStorage}
+        />
+      )}
     </Form>
   );
 };
 
 type SecurityAndNetworkProps = {
-  state: WizardState['securityAndNetwork'];
+  state: WizardState;
   dispatch: WizardDispatch;
   infraType: string;
+  isExternal?: boolean;
 };

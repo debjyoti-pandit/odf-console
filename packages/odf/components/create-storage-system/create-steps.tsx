@@ -8,7 +8,6 @@ import { BackingStorageType, DeploymentType } from '../../types';
 import {
   CapacityAndNodes,
   CreateStorageClass,
-  ConnectionDetails,
   ReviewAndCreate,
   CreateLocalVolumeSet,
   SecurityAndNetwork,
@@ -56,7 +55,7 @@ export const createSteps = (
       name: StepsName(t)[Steps.SecurityAndNetwork],
       component: (
         <SecurityAndNetwork
-          state={securityAndNetwork}
+          state={state}
           dispatch={dispatch}
           infraType={infraType}
         />
@@ -82,14 +81,15 @@ export const createSteps = (
 
   const rhcsExternalProviderSteps: WizardStep[] = [
     {
-      name: StepsName(t)[Steps.ConnectionDetails],
+      name: StepsName(t)[Steps.SecurityAndNetwork],
       canJumpTo: stepIdReached >= 2,
       id: 2,
       component: (
-        <ConnectionDetails
-          state={state.connectionDetails}
+        <SecurityAndNetwork
+          state={state}
           dispatch={dispatch}
-          externalStorage={externalStorage}
+          infraType={infraType}
+          isExternal={state.backingStorage.type === BackingStorageType.EXTERNAL}
         />
       ),
     },

@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { StorageClusterModel } from '@odf/ocs/models';
+import { getNetworkEncryption } from '@odf/ocs/utils';
 import {
   useCustomPrometheusPoll,
   usePrometheusBasePath,
@@ -14,6 +16,7 @@ import { Status } from '@odf/shared/status/Status';
 import {
   ClusterServiceVersionKind,
   HumanizeResult,
+  StorageClusterKind,
   StorageSystemKind,
 } from '@odf/shared/types';
 import { useCustomTranslation } from '@odf/shared/useCustomTranslationHook';
@@ -120,6 +123,7 @@ export const normalizeMetrics: MetricNormalize = (
 type CustomData = {
   normalizedMetrics: ReturnType<typeof normalizeMetrics>;
   launchModal: LaunchModal;
+  storageClusters: StorageClusterKind[];
 };
 
 type StorageSystemNewPageProps = {
@@ -150,6 +154,10 @@ const tableColumnInfo = [
     id: 'throughput',
   },
   { className: classNames('pf-m-hidden', 'pf-m-visible-on-xl'), id: 'latency' },
+  {
+    className: classNames('pf-m-hidden', 'pf-m-visible-on-xl'),
+    id: 'inTransitEncryption',
+  },
   { className: 'dropdown-kebab-pf pf-c-table__action', id: '' },
 ];
 
@@ -216,11 +224,18 @@ const StorageSystemList: React.FC<StorageSystemNewPageProps> = (props) => {
         id: tableColumnInfo[6].id,
       },
       {
-        title: '',
+        title: t('In-transit encryption'),
         props: {
           className: tableColumnInfo[7].className,
         },
         id: tableColumnInfo[7].id,
+      },
+      {
+        title: '',
+        props: {
+          className: tableColumnInfo[8].className,
+        },
+        id: tableColumnInfo[8].id,
       },
     ],
     [t]
@@ -247,15 +262,24 @@ const StorageSystemRow: React.FC<RowProps<StorageSystemKind, CustomData>> = ({
   activeColumnIDs,
   rowData,
 }) => {
-  const { apiGroup, apiVersion, kind } = getGVK(obj.spec.kind);
+  const { t } = useCustomTranslation();
+  const { apiGroup, apiVersion, kind } = getGVK(obj?.spec?.kind);
   const systemKind = referenceForGroupVersionKind(apiGroup)(apiVersion)(kind);
   const systemName = obj?.metadata?.name;
-  const { normalizedMetrics, launchModal } = rowData;
+  const { normalizedMetrics, launchModal, storageClusters } = rowData;
 
   const metrics = normalizedMetrics?.normalizedMetrics?.[systemName];
 
   const { rawCapacity, usedCapacity, iops, throughput, latency } =
     metrics || {};
+
+  const { name: storageClusterName, namespace: storageClusterNamespace } =
+    obj.spec;
+  const cluster = storageClusters.find(
+    ({ metadata }) =>
+      metadata.name === storageClusterName &&
+      metadata.namespace === storageClusterNamespace
+  );
   return (
     <>
       <TableData {...tableColumnInfo[0]} activeColumnIDs={activeColumnIDs}>
@@ -288,14 +312,37 @@ const StorageSystemRow: React.FC<RowProps<StorageSystemKind, CustomData>> = ({
         {latency?.string || '-'}
       </TableData>
       <TableData {...tableColumnInfo[7]} activeColumnIDs={activeColumnIDs}>
+        {!!cluster
+          ? getNetworkEncryption(cluster)
+            ? t('Enabled')
+            : t('Disabled')
+          : '-'}
+      </TableData>
+      <TableData {...tableColumnInfo[8]} activeColumnIDs={activeColumnIDs}>
         <Kebab
           launchModal={launchModal}
-          extraProps={{ resource: obj, resourceModel: ODFStorageSystem }}
-          customKebabItems={(t) => [
+          extraProps={{
+            resource: obj,
+            resourceModel: ODFStorageSystem,
+            cluster,
+          }}
+          customKebabItems={() => [
             {
               key: 'ADD_CAPACITY',
               value: t('Add Capacity'),
             },
+            ...(!!cluster
+              ? [
+                  {
+                    key: 'IN_TRANSIT_ENCRYPTION',
+                    value: t('{{status}} in transit encryption', {
+                      status: !getNetworkEncryption(cluster) //negating as we need to perform the opposite action
+                        ? t('Enable')
+                        : t('Disable'),
+                    }),
+                  },
+                ]
+              : []),
           ]}
         />
       </TableData>
@@ -316,6 +363,9 @@ const extraMap = {
   ADD_CAPACITY: React.lazy(
     () => import('../../modals/add-capacity/add-capacity-modal')
   ),
+  IN_TRANSIT_ENCRYPTION: React.lazy(
+    () => import('../../modals/in-transit-encryption/in-transit-encryption')
+  ),
 };
 
 export const StorageSystemListPage: React.FC<StorageSystemListPageProps> = ({
@@ -334,6 +384,14 @@ export const StorageSystemListPage: React.FC<StorageSystemListPageProps> = ({
     selector,
     namespace,
   });
+
+  const [storageClusters, storageClustersLoaded, storageClustersError] =
+    useK8sWatchResource<StorageClusterKind[]>({
+      kind: referenceForModel(StorageClusterModel),
+      isList: true,
+      selector,
+      namespace,
+    });
 
   const [data, filteredData, onFilterChange] =
     useListPageFilter(storageSystems);
@@ -415,9 +473,9 @@ export const StorageSystemListPage: React.FC<StorageSystemListPageProps> = ({
         <StorageSystemList
           data={filteredData as StorageSystemKind[]}
           unfilteredData={storageSystems}
-          loaded={loaded}
-          loadError={loadError}
-          rowData={{ normalizedMetrics, launchModal }}
+          loaded={loaded && storageClustersLoaded}
+          loadError={loadError && storageClustersError}
+          rowData={{ normalizedMetrics, launchModal, storageClusters }}
         />
       </ListPageBody>
     </>

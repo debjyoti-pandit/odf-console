@@ -154,7 +154,9 @@ export const ConnectionDetails: React.FC<ExternalComponentProps<RHCSState>> = ({
 export const rhcsPayload: CreatePayload<RHCSState> = (
   systemName,
   state,
-  model
+  model,
+  _,
+  inTransitChecked
 ) => {
   const { apiVersion, apiGroup, kind, plural } = SecretModel;
   return [
@@ -189,6 +191,13 @@ export const rhcsPayload: CreatePayload<RHCSState> = (
           namespace: CEPH_STORAGE_NAMESPACE,
         },
         spec: {
+          network: {
+            connections: {
+              encryption: {
+                enabled: inTransitChecked,
+              },
+            },
+          },
           externalStorage: {
             enable: true,
           },

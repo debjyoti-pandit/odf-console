@@ -67,7 +67,8 @@ export type CreatePayload<S extends ExternalState> = (
   systemName: string,
   state: S,
   model: Model,
-  storageClassName: string
+  storageClassName: string,
+  inTransitChecked: boolean
 ) => Payload[];
 
 export type Payload = { model: Model; payload: K8sResourceKind };

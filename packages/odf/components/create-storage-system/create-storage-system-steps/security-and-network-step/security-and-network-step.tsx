@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { StorageClassWizardStepExtensionProps as ExternalStorage } from '@odf/odf-plugin-sdk/extensions';
 import { getNamespace, getName } from '@odf/shared/selectors';
 import { useFlag } from '@openshift-console/dynamic-plugin-sdk';
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk-internal/lib/extensions/console-types';
@@ -7,7 +6,6 @@ import { Form } from '@patternfly/react-core';
 import { FEATURES } from '../../../../features';
 import { NetworkType, NADSelectorType } from '../../../../types';
 import { WizardDispatch, WizardState } from '../../reducer';
-import { ConnectionDetails } from '../connection-details-step';
 import { NetworkFormGroup } from './configure';
 import { Encryption } from './encryption';
 
@@ -15,10 +13,6 @@ export const SecurityAndNetwork: React.FC<SecurityAndNetworkProps> = ({
   securityAndNetworkState,
   dispatch,
   infraType,
-  isExternal,
-  connectionDetailState,
-  externalStorage,
-  supportedExternalStorage,
 }) => {
   const isMultusSupported = useFlag(FEATURES.OCS_MULTUS);
 
@@ -57,23 +51,14 @@ export const SecurityAndNetwork: React.FC<SecurityAndNetworkProps> = ({
         kms={kms}
         dispatch={dispatch}
         infraType={infraType}
-        isExternal={isExternal}
       />
-      {!isExternal && isMultusSupported && (
+      {isMultusSupported && (
         <NetworkFormGroup
           networkType={nwType}
           setNetworkType={setNetworkType}
           setNetwork={setNetwork}
           publicNetwork={publicNetwork}
           clusterNetwork={clusterNetwork}
-        />
-      )}
-      {isExternal && (
-        <ConnectionDetails
-          state={connectionDetailState}
-          dispatch={dispatch}
-          externalStorage={externalStorage}
-          supportedExternalStorage={supportedExternalStorage}
         />
       )}
     </Form>
@@ -84,8 +69,4 @@ type SecurityAndNetworkProps = {
   securityAndNetworkState: WizardState['securityAndNetwork'];
   dispatch: WizardDispatch;
   infraType: string;
-  isExternal?: boolean;
-  connectionDetailState?: WizardState['connectionDetails'];
-  externalStorage?: WizardState['backingStorage']['externalStorage'];
-  supportedExternalStorage?: ExternalStorage[];
 };

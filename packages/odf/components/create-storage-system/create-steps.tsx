@@ -13,6 +13,7 @@ import {
   CreateLocalVolumeSet,
   SecurityAndNetwork,
   Security,
+  ConnectionDetails,
 } from './create-storage-system-steps';
 import { WizardDispatch, WizardState } from './reducer';
 
@@ -34,7 +35,6 @@ export const createSteps = (
     securityAndNetwork,
     nodes,
     createLocalVolumeSet,
-    connectionDetails,
   } = state;
   const { externalStorage, deployment } = backingStorage;
   const { encryption, kms } = securityAndNetwork;
@@ -90,16 +90,13 @@ export const createSteps = (
 
   const rhcsExternalProviderSteps: WizardStep[] = [
     {
-      name: StepsName(t)[Steps.SecurityAndNetwork],
+      name: StepsName(t)[Steps.ConnectionDetails],
       canJumpTo: stepIdReached >= 2,
       id: 2,
       component: (
-        <SecurityAndNetwork
-          securityAndNetworkState={securityAndNetwork}
+        <ConnectionDetails
+          state={state.connectionDetails}
           dispatch={dispatch}
-          infraType={infraType}
-          isExternal={backingStorage.type === BackingStorageType.EXTERNAL}
-          connectionDetailState={connectionDetails}
           externalStorage={externalStorage}
           supportedExternalStorage={supportedExternalStorage}
         />

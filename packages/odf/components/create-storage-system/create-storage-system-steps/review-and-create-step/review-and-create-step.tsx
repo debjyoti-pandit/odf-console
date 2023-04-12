@@ -204,7 +204,7 @@ export const ReviewAndCreate: React.FC<ReviewAndCreateProps> = ({
             )}
           </ReviewItem>
         ))}
-      {isRhcs && (
+      {/* {isRhcs && (
         <ReviewItem title={t('Security and network')}>
           <ListItem>
             {t('In-transit encryption: {{hasInTransitEncryption}}', {
@@ -212,7 +212,7 @@ export const ReviewAndCreate: React.FC<ReviewAndCreateProps> = ({
             })}
           </ListItem>
         </ReviewItem>
-      )}
+      )} */}
     </>
   );
 };

@@ -155,7 +155,6 @@ export const Encryption: React.FC<EncryptionProps> = ({
   dispatch,
   infraType,
   isMCG,
-  isExternal,
 }) => {
   const { t } = useCustomTranslation();
   const isKmsSupported = useFlag(FEATURES.OCS_KMS);
@@ -240,7 +239,7 @@ export const Encryption: React.FC<EncryptionProps> = ({
   return (
     <>
       <FormGroup fieldId="configure-encryption" label={t('Encryption')}>
-        {!isExternal && (
+        {
           <Checkbox
             data-test="encryption-checkbox"
             id="configure-encryption"
@@ -271,7 +270,7 @@ export const Encryption: React.FC<EncryptionProps> = ({
               )
             }
           />
-        )}
+        }
         <Checkbox
           className="odf-in-transit-encryption"
           data-test="in-transit-encryption-checkbox"
@@ -318,5 +317,4 @@ type EncryptionProps = {
   dispatch: WizardDispatch;
   infraType: string;
   isMCG?: boolean;
-  isExternal?: boolean;
 };

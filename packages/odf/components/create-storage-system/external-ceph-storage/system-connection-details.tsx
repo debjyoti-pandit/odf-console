@@ -160,7 +160,6 @@ export const rhcsPayload: CreatePayload<RHCSState> = ({
   systemName,
   state,
   model,
-  inTransitStatus,
 }) => {
   return [
     {
@@ -189,13 +188,6 @@ export const rhcsPayload: CreatePayload<RHCSState> = ({
           namespace: CEPH_STORAGE_NAMESPACE,
         },
         spec: {
-          network: {
-            connections: {
-              encryption: {
-                enabled: inTransitStatus,
-              },
-            },
-          },
           externalStorage: {
             enable: true,
           },

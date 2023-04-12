@@ -66,9 +66,7 @@ const canJumpToNextStep = (
     connectionDetails,
     nodes,
   } = state;
-  const { type, externalStorage } = backingStorage;
-  const isExternal: boolean = type === BackingStorageType.EXTERNAL;
-  const isRHCS: boolean = externalStorage === OCSStorageClusterModel.kind;
+  const { externalStorage } = backingStorage;
   const { capacity } = capacityAndNodes;
   const { chartNodes, volumeSetName, isValidDiskSize } = createLocalVolumeSet;
   const { encryption, kms, networkType, publicNetwork, clusterNetwork } =
@@ -90,6 +88,8 @@ const canJumpToNextStep = (
         canGoToNextStep &&
         canGoToNextStep(createStorageClass, storageClass.name)
       );
+    case StepsName(t)[Steps.ConnectionDetails]:
+      return canGoToNextStep(connectionDetails, storageClass.name);
     case StepsName(t)[Steps.CreateLocalVolumeSet]:
       return (
         chartNodes.size >= MINIMUM_NODES &&
@@ -99,9 +99,6 @@ const canJumpToNextStep = (
     case StepsName(t)[Steps.CapacityAndNodes]:
       return nodes.length >= MINIMUM_NODES && capacity;
     case StepsName(t)[Steps.SecurityAndNetwork]:
-      if (isExternal && isRHCS) {
-        return canGoToNextStep(connectionDetails, storageClass.name);
-      }
       return (
         encryption.hasHandled &&
         kms.providerState.hasHandled &&
@@ -131,7 +128,6 @@ const handleReviewAndCreateNext = async (
     capacityAndNodes,
   } = state;
   const { externalStorage, deployment, type } = state.backingStorage;
-  const inTransitChecked = state.securityAndNetwork.encryption.inTransit;
   const { encryption, kms } = state.securityAndNetwork;
   const isRhcs: boolean = externalStorage === OCSStorageClusterModel.kind;
   const isMCG: boolean = deployment === DeploymentType.MCG;
@@ -177,7 +173,6 @@ const handleReviewAndCreateNext = async (
         state: subSystemState,
         model,
         storageClassName: storageClass.name,
-        inTransitStatus: inTransitChecked,
       });
 
       await createStorageSystem(subSystemName, subSystemKind);
